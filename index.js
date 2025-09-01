@@ -22,6 +22,29 @@ async function run() {
     const userCollection = database.collection("Users")
 
 
+    const VerifyToken = async (req, res, next) => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).send({ message: "Unauthorized Access!" });
+      }
+
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).send({ message: "Unauthorized Access!" });
+      }
+
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ message: "Invalid or expired token" });
+        }
+
+        req.user = decoded;
+        console.log(decoded)
+        next();
+      });
+    };
+
+
     app.post("/user", async (req, res) => {
       const data = req.body
       try {
@@ -33,6 +56,7 @@ async function run() {
     });
 
     app.get("/login", async (req, res) => {
+
       try {
         const { email, password } = req.query;
         console.log(email, password)
@@ -54,7 +78,12 @@ async function run() {
       }
     });
 
+    app.get("/all-user", VerifyToken, async (req, res) => {
+      console.log(req.user.email)
+      const reault = await userCollection.find().toArray();
+      res.send(reault)
 
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
