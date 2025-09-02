@@ -39,7 +39,7 @@ async function run() {
         }
 
         req.user = decoded;
-        console.log(decoded)
+        // console.log(decoded)
         next();
       });
     };
@@ -47,19 +47,39 @@ async function run() {
 
     app.post("/user", async (req, res) => {
       const data = req.body
+      const email = req.body.email;
+      console.log(email)
+
+
+      const quary = await userCollection.findOne({ email })
+      if (quary) {
+        res.send({ message: "user already redister" })
+      }
+      else {
+        try {
+          const result = await userCollection.insertOne(data);
+          res.status(201).send(result);
+        } catch (error) {
+          res.status(500).send({ error: error.message });
+        }
+      }
+
+    });
+    app.get("/user", async (req, res) => {
+      const { email } = req.query;
       try {
-        const result = await userCollection.insertOne(data);
-        res.status(201).send(result);
+        const result = await userCollection.findOne({ email });
+        res.send(result)
       } catch (error) {
         res.status(500).send({ error: error.message });
       }
-    });
+    })
 
     app.get("/login", async (req, res) => {
 
       try {
         const { email, password } = req.query;
-        console.log(email, password)
+        // console.log(email, password)
 
         const user = await userCollection.findOne({ email, password });
         const token = jwt.sign(
@@ -78,8 +98,24 @@ async function run() {
       }
     });
 
+    app.get("/user/profile", VerifyToken, async (req, res) => {
+      try {
+        const email = req.user.email; // ✅ decoded থেকে email নিন
+        console.log("email Check:", email);
+
+        const user = await userCollection.findOne({ email });
+        if (!user) {
+          return res.status(404).send({ message: "User not found" });
+        }
+
+        res.send(user);
+      } catch (error) {
+        res.status(500).send({ error: error.message });
+      }
+    });
+
     app.get("/all-user", VerifyToken, async (req, res) => {
-      console.log(req.user.email)
+      // console.log(req.user.email)
       const reault = await userCollection.find().toArray();
       res.send(reault)
 
