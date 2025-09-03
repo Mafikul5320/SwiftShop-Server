@@ -20,6 +20,8 @@ async function run() {
   try {
     const database = client.db("SwiftShop")
     const userCollection = database.collection("Users")
+    const CategoriesCollection = database.collection("Categories")
+    const ProductsCollection = database.collection("Products")
 
 
     const VerifyToken = async (req, res, next) => {
@@ -100,7 +102,7 @@ async function run() {
 
     app.get("/user/profile", VerifyToken, async (req, res) => {
       try {
-        const email = req.user.email; // ✅ decoded থেকে email নিন
+        const email = req.user.email; 
         console.log("email Check:", email);
 
         const user = await userCollection.findOne({ email });
@@ -114,12 +116,41 @@ async function run() {
       }
     });
 
-    app.get("/all-user", VerifyToken, async (req, res) => {
-      // console.log(req.user.email)
-      const reault = await userCollection.find().toArray();
+    app.get("/categories", VerifyToken, async (req, res) => {
+      const reault = await CategoriesCollection.find().toArray();
       res.send(reault)
 
     })
+    app.post("/product", async (req, res) => {
+      const data = req.body;
+      try {
+        const product = await ProductsCollection.insertOne(data);
+        res.status(201).json({ message: "Product added successfully", product });
+      } catch (error) {
+        res.status(500).json({ message: "Server error" });
+      }
+    })
+
+    app.get("/product", async (req, res) => {
+      try {
+        const { category } = req.query;
+        let query = {};
+        if (category) {
+          query.categories = category; 
+        }
+
+        const result = await ProductsCollection
+          .find(query)
+          .sort({ _id: -1 }) 
+          .toArray();
+
+        res.status(200).send(result);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Server error" });
+      }
+    });
+
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
