@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
@@ -87,7 +87,7 @@ async function run() {
         const token = jwt.sign(
           { "email": email },
           process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: "1h" }
+          { expiresIn: 15 }
         );
 
         if (!user) {
@@ -102,7 +102,7 @@ async function run() {
 
     app.get("/user/profile", VerifyToken, async (req, res) => {
       try {
-        const email = req.user.email; 
+        const email = req.user.email;
         console.log("email Check:", email);
 
         const user = await userCollection.findOne({ email });
@@ -116,7 +116,7 @@ async function run() {
       }
     });
 
-    app.get("/categories", VerifyToken, async (req, res) => {
+    app.get("/categories", async (req, res) => {
       const reault = await CategoriesCollection.find().toArray();
       res.send(reault)
 
@@ -136,18 +136,87 @@ async function run() {
         const { category } = req.query;
         let query = {};
         if (category) {
-          query.categories = category; 
+          query.categories = category;
         }
 
         const result = await ProductsCollection
           .find(query)
-          .sort({ _id: -1 }) 
+          .sort({ _id: -1 })
           .toArray();
 
         res.status(200).send(result);
       } catch (error) {
         console.error("Error fetching products:", error);
         res.status(500).json({ message: "Server error" });
+      }
+    });
+
+    app.get("/product-details/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      try {
+        const result = await ProductsCollection.findOne({ _id: new ObjectId(id) })
+        res.send(result)
+      } catch (error) {
+        res.status(500).json({ message: "Server error" })
+      }
+    })
+
+    app.get("/users", async (req, res) => {
+      try {
+        const result = await userCollection.find().toArray();
+        res.status(200).send(result);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send("Failed to get users");
+      }
+    });
+
+
+    app.get("/oneproduct", async (req, res) => {
+      const { id } = req.query;
+      if (!id) {
+        return res.status(400).send({ message: "Product ID is required" });
+      }
+      try {
+        const result = await ProductsCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!result) {
+          return res.status(404).send({ message: "Product not found" });
+        }
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        res.status(500).send({ message: "Failed to get product" });
+      }
+    });
+
+    app.put("/updateproduct/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log(id)
+        const updatedData = req.body;
+        console.log(updatedData)
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            product_name: updatedData.product_name,
+            slug: updatedData.slug,
+            price: updatedData.price,
+            discount: updatedData.discount,
+            stockStatus: updatedData.stockStatus,
+            categories: updatedData.categories,
+            description: updatedData.description,
+            status: updatedData.status,
+            product_img: updatedData.product_img,
+            updatedAt: new Date(),
+          },
+        };
+
+        const result = await ProductsCollection.updateOne(filter, updateDoc);
+        res.status(200).json({ result, message: "Product updated successfully" });
+      } catch (err) {
+        res.status(500).json({ success: false, message: "Internal Server Error" });
       }
     });
 
