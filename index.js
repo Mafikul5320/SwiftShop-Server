@@ -87,7 +87,7 @@ async function run() {
         const token = jwt.sign(
           { "email": email },
           process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: 15 }
+          { expiresIn: "6h" }
         );
 
         if (!user) {
@@ -245,8 +245,22 @@ async function run() {
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    app.get("/category-product", async (req, res) => {
+      const { name } = req.query;
+      console.log(name)
+      try {
+        if (name) {
+          const result = await ProductsCollection.find({ categories: name }).toArray()
+          res.status(200).send(result);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send("Failed to get users");
+      }
+    });
+
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
 
   }
