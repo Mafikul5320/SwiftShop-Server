@@ -171,6 +171,20 @@ async function run() {
         res.status(500).send("Failed to get users");
       }
     });
+    app.patch("/make-admin", async (req, res) => {
+      const { id } = req.query;
+      console.log(id)
+      try {
+        const result = await userCollection.findOne({ _id: new ObjectId(id) })
+        if (result) {
+          const update = await userCollection.updateOne(result, { $set: { role: "admin" } })
+          res.status(200).send(update);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send("Failed to get users");
+      }
+    });
 
 
     app.get("/oneproduct", async (req, res) => {
@@ -220,6 +234,16 @@ async function run() {
       }
     });
 
+    app.delete("/deleteproduct/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await ProductsCollection.deleteOne({ _id: new ObjectId(id) });
+        res.send({ result, message: "Product deleted successfully" });
+      } catch (error) {
+        console.error("Delete Error:", error);
+        res.status(500).send({ success: false, message: "Failed to delete product" });
+      }
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
