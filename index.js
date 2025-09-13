@@ -81,7 +81,6 @@ async function run() {
 
       try {
         const { email, password } = req.query;
-        // console.log(email, password)
 
         const user = await userCollection.findOne({ email, password });
         const token = jwt.sign(
