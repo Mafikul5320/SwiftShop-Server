@@ -258,6 +258,25 @@ async function run() {
       }
     });
 
+    app.get("/search", async (req, res) => {
+      const search = req.query.search;
+      console.log(search)
+      try {
+        if (!search) {
+          return res.json([]);
+        }
+
+        const products = await ProductsCollection.find({
+          product_name: { $regex: "" + search, $options: "i" }
+        }).limit(10).toArray();
+
+        res.send(products);
+      } catch (error) {
+        console.log(error)
+        res.status(500).send("Failed to get users");
+      }
+    })
+
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
