@@ -215,6 +215,8 @@ async function run() {
           $set: {
             product_name: updatedData.product_name,
             slug: updatedData.slug,
+            rating: updatedData.rating,
+            quantity: updatedData.quantity,
             price: updatedData.price,
             discount: updatedData.discount,
             stockStatus: updatedData.stockStatus,
