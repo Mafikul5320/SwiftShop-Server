@@ -41,7 +41,7 @@ async function run() {
         }
 
         req.user = decoded;
-        // console.log(decoded)
+        
         next();
       });
     };
@@ -279,8 +279,7 @@ async function run() {
       }
     })
 
-    // await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    
   } finally {
 
   }
@@ -289,7 +288,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('S w i f t S h o p')
+  res.send('S w i f t S h o p ')
 })
 
 app.listen(port, () => {
